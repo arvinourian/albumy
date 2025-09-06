@@ -10,6 +10,8 @@ Demo: http://albumy.helloflask.com
 
 ## Installation
 
+All of this was works with Python 3.9.5
+
 clone:
 ```
 $ git clone https://github.com/greyli/albumy.git
