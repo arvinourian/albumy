@@ -1,37 +1,50 @@
-# Albumy
+# Albumy + AI Azure Computer Vision
 
 *Capture and share every wonderful moment.*
 
-> Example application for *[Python Web Development with Flask](https://helloflask.com/en/book/1)* (《[Flask Web 开发实战](https://helloflask.com/book/1)》).
-
-Demo: http://albumy.helloflask.com
-
 ![Screenshot](https://helloflask.com/screenshots/albumy.png)
 
+---
+
+## What’s new in this fork
+
+- **AI-generated descriptions (alt text)** on upload using **Azure AI Vision (Image Analysis 4.0)** 
+- Photo page shows an **“AI Generated Description”** button under the tags to reveal the alternative text to users
+- **Auto keyword tags** Searchable AI generated tags reusing Albumy's `Tag` model
+
+---
+
+## Requirements
+
+- **Python 3.9.5 (64-bit)** recommended  
+- An **Azure AI Vision / Computer Vision** resource in a region that supports **Image captions (4.0)**  
+- Git + a terminal (Git Bash / PowerShell / macOS/Linux shell)
+
+---
+
 ## Installation
+Bash assumed
 
-All of this was works with Python 3.9.5
-
-clone:
+Clone:
 ```
-$ git clone https://github.com/greyli/albumy.git
+$ git clone https://github.com/arvinourian/albumy.git
 $ cd albumy
 ```
-create & activate virtual env then install dependency:
+Create & activate virtual env then install dependency:
+```
+$ python3 -m venv .venv  # Use 'py -3.9 -m venv .venv' on Windows
+$ source .venv/bin/activate  # Use `env\Scripts\activate` on Windows
+$ python -m pip install -r requirements.txt
+```
 
-with venv/virtualenv + pip:
+Set Azure values:
 ```
-$ python -m venv env  # use `virtualenv env` for Python2, use `python3 ...` for Python3 on Linux & macOS
-$ source env/bin/activate  # use `env\Scripts\activate` on Windows
-$ pip install -r requirements.txt
+$ cp .env.example .env # Paste ENDPOINT and KEY values from your Azure Computer Vision resource instance
 ```
-or with Pipenv:
+
+Generate fake data then run:
 ```
-$ pipenv install --dev
-$ pipenv shell
-```
-generate fake data then run:
-```
+$ export FLASK_APP=albumy
 $ flask forge
 $ flask run
 * Running on http://127.0.0.1:5000/
