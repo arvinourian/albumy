@@ -19,8 +19,9 @@ from albumy.models import User, Photo, Tag, Follow, Collect, Comment, Notificati
 from albumy.notifications import push_comment_notification, push_collect_notification
 from albumy.utils import rename_image, resize_image, redirect_back, flash_errors
 
-main_bp = Blueprint('main', __name__)
+from albumy.services.vision import analyze as vision_analyze
 
+main_bp = Blueprint('main', __name__)
 
 @main_bp.route('/')
 def index():
@@ -122,7 +123,14 @@ def upload():
     if request.method == 'POST' and 'file' in request.files:
         f = request.files.get('file')
         filename = rename_image(f.filename)
-        f.save(os.path.join(current_app.config['ALBUMY_UPLOAD_PATH'], filename))
+        file_path = os.path.join(current_app.config['ALBUMY_UPLOAD_PATH'], filename)
+        f.save(file_path)
+
+        try:
+            f.stream.seek(0)
+        except Exception:
+            pass
+
         filename_s = resize_image(f, filename, current_app.config['ALBUMY_PHOTO_SIZE']['small'])
         filename_m = resize_image(f, filename, current_app.config['ALBUMY_PHOTO_SIZE']['medium'])
         photo = Photo(
@@ -132,7 +140,27 @@ def upload():
             author=current_user._get_current_object()
         )
         db.session.add(photo)
+        try:
+            with open(file_path, "rb") as imgf:
+                image_bytes = imgf.read()
+
+            alt_text, keywords = vision_analyze(image_bytes)
+            photo.alt_text = alt_text
+
+            if keywords:
+                existing = {t.name: t for t in Tag.query.filter(Tag.name.in_(keywords)).all()}
+                for name in keywords:
+                    tag = existing.get(name)
+                    if not tag:
+                        tag = Tag(name=name)
+                        db.session.add(tag)
+                        existing[name] = tag
+                    if tag not in photo.tags:
+                        photo.tags.append(tag)
+        except Exception as e:
+            current_app.logger.warning(f"Vision analyze failed: {e}")
         db.session.commit()
+        flash('Photo uploaded.', 'success')
     return render_template('main/upload.html')
 
 
