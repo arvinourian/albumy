@@ -59,11 +59,25 @@ def search():
     per_page = current_app.config['ALBUMY_SEARCH_RESULT_PER_PAGE']
     if category == 'user':
         pagination = User.query.whooshee_search(q).paginate(page, per_page)
+        results = pagination.items
     elif category == 'tag':
         pagination = Tag.query.whooshee_search(q).paginate(page, per_page)
+        results = pagination.items
+    elif category == 'photo':
+        # Try to find tags matching the query
+        tag_matches = Tag.query.whooshee_search(q).all()
+        if tag_matches:
+            # Get all photos associated with the found tags
+            photo_query = Photo.query.join(Photo.tags).filter(Tag.id.in_([t.id for t in tag_matches])).distinct()
+            pagination = photo_query.paginate(page, per_page)
+            results = pagination.items
+        else:
+            # Fallback to normal photo search
+            pagination = Photo.query.whooshee_search(q).paginate(page, per_page)
+            results = pagination.items
     else:
-        pagination = Photo.query.whooshee_search(q).paginate(page, per_page)
-    results = pagination.items
+        pagination = None
+        results = []
     return render_template('main/search.html', q=q, results=results, pagination=pagination, category=category)
 
 
